@@ -1,0 +1,23 @@
+[package]
+name = "be"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.101"
+axum = "0.8.8"
+bcrypt = "0.18.0"
+chrono = { version = "0.4.43", features = ["serde"] }
+deadpool-redis = { version = "0.22.1", features = ["serde", "rt_tokio_1"] }
+dotenvy = "0.15.7"
+redis = { version = "1.0.3", features = ["tokio-comp", "tokio-rustls-comp"] }
+sea-orm = { version = "1.1.19", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+tokio = { version = "1.49.0", features = ["full"] }
+tower-http = "0.6.8"
+tracing = { version = "0.1.44", features = ["attributes"] }
+tracing-log = "0.2.0"
+tracing-subscriber = { version = "0.3.22", features = ["fmt", "env-filter", "json", "chrono"] }
+uuid = "1.20.0"

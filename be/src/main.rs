@@ -3,7 +3,7 @@ use be::{get_db_connection, get_redis_pool};
 use be::AppState;
 use anyhow::Result;
 use be::init_router;
-use tokio::signal;
+use tokio::{signal, time::{sleep, Duration}};
 use tracing::{info, error};
 
 #[tokio::main]
@@ -13,7 +13,7 @@ async fn main() {
     
     if let Err(e) = run().await {
         error!(error = %e, "Application failed to start");
-        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        sleep(Duration::from_millis(100)).await;
         std::process::exit(1);
     }
 }

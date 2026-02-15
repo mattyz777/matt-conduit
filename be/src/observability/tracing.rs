@@ -45,7 +45,7 @@ pub fn init_tracing() {
             tracing_subscriber::fmt::layer()
                 .with_target(false)
                 .with_timer(LocalTime)
-                .with_writer(std::io::stdout),
+                .with_writer(std::io::stdout)
         )
         // 文件输出
         .with(

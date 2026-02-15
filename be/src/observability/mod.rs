@@ -1,2 +1,2 @@
-pub mod tracing;
 pub mod http;
+pub mod tracing;

@@ -1,3 +1,3 @@
-pub mod user_dao;
+pub mod user;
 
-pub use user_dao::UserDao;
+pub use user::UserDao;

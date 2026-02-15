@@ -1,3 +1,3 @@
-pub mod user_entity;
+pub mod user;
 
-pub use user_entity::Gender;
+pub use user::Gender;

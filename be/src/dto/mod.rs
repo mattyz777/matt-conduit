@@ -1,3 +1,3 @@
-pub mod common_dto;
-pub mod user_dto;
+pub mod common;
+pub mod user;
 

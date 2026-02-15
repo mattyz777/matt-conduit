@@ -6,7 +6,7 @@ use crate::handler::user_handler;
 
 pub fn init_router(state: AppState) -> Router {
     let api_router = Router::new()
-        .route("/users", get(user_handler::create_user).post(user_handler::create_user))
+        .route("/users", post(user_handler::create_user))
         .route("/users/{id}", get(user_handler::get_user))
         .route("/users/{id}", put(user_handler::update_user))
         .route("/users/{id}", delete(user_handler::delete_user))

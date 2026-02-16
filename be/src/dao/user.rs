@@ -1,13 +1,10 @@
 //! 用户数据访问层 (DAO)
-//!
-//! 负责用户表的数据库操作
 
-use crate::entity::user_entity::{self, Entity as UserEntity, Gender};
+use crate::entity::user::{self, Entity as UserEntity, Gender};
 use crate::state::AppState;
 use crate::error::AppError;
 use sea_orm::{Set, EntityTrait, ColumnTrait, IntoActiveModel, QueryFilter, ActiveModelTrait};
 
-/// 用户 DAO
 pub struct UserDao;
 
 impl UserDao {
@@ -19,8 +16,8 @@ impl UserDao {
         age: Option<i32>,
         gender: Gender,
         email: Option<String>,
-    ) -> Result<user_entity::Model, AppError> {
-        let user = user_entity::ActiveModel {
+    ) -> Result<user::Model, AppError> {
+        let user = user::ActiveModel {
             username: Set(username),
             password: Set(hashed_password),
             age: Set(age),
@@ -39,10 +36,10 @@ impl UserDao {
     pub async fn find_by_id(
         state: &AppState,
         id: i32,
-    ) -> Result<Option<user_entity::Model>, AppError> {
+    ) -> Result<Option<user::Model>, AppError> {
         let user = UserEntity::find()
-            .filter(user_entity::Column::Id.eq(id))
-            .filter(user_entity::Column::IsDeleted.eq(false))
+            .filter(user::Column::Id.eq(id))
+            .filter(user::Column::IsDeleted.eq(false))
             .one(&state.db)
             .await?;
 
@@ -53,10 +50,10 @@ impl UserDao {
     pub async fn find_by_username(
         state: &AppState,
         username: &str,
-    ) -> Result<Option<user_entity::Model>, AppError> {
+    ) -> Result<Option<user::Model>, AppError> {
         let user = UserEntity::find()
-            .filter(user_entity::Column::Username.eq(username))
-            .filter(user_entity::Column::IsDeleted.eq(false))
+            .filter(user::Column::Username.eq(username))
+            .filter(user::Column::IsDeleted.eq(false))
             .one(&state.db)
             .await?;
 
@@ -70,11 +67,11 @@ impl UserDao {
         exclude_id: Option<i32>,
     ) -> Result<bool, AppError> {
         let mut query = UserEntity::find()
-            .filter(user_entity::Column::Username.eq(username))
-            .filter(user_entity::Column::IsDeleted.eq(false));
+            .filter(user::Column::Username.eq(username))
+            .filter(user::Column::IsDeleted.eq(false));
 
         if let Some(id) = exclude_id {
-            query = query.filter(user_entity::Column::Id.ne(id));
+            query = query.filter(user::Column::Id.ne(id));
         }
 
         let existing = query.one(&state.db).await?;
@@ -84,13 +81,13 @@ impl UserDao {
     /// 更新用户
     pub async fn update(
         state: &AppState,
-        user: user_entity::Model,
+        user: user::Model,
         username: Option<String>,
         hashed_password: Option<String>,
-        age: Option<Option<i32>>,
+        age: Option<i32>,
         gender: Option<Gender>,
-        email: Option<Option<String>>,
-    ) -> Result<user_entity::Model, AppError> {
+        email: Option<String>,
+    ) -> Result<user::Model, AppError> {
         let mut user_active = user.into_active_model();
 
         if let Some(new_username) = username {
@@ -102,7 +99,7 @@ impl UserDao {
         }
 
         if let Some(new_age) = age {
-            user_active.age = Set(new_age);
+            user_active.age = Set(Some(new_age));
         }
 
         if let Some(new_gender) = gender {
@@ -110,7 +107,7 @@ impl UserDao {
         }
 
         if let Some(new_email) = email {
-            user_active.email = Set(new_email);
+            user_active.email = Set(Some(new_email));
         }
 
         user_active.updated_at = Set(chrono::Utc::now().naive_utc());
@@ -123,7 +120,7 @@ impl UserDao {
     /// 软删除用户（设置 is_deleted = true）
     pub async fn soft_delete(
         state: &AppState,
-        user: user_entity::Model,
+        user: user::Model,
     ) -> Result<(), AppError> {
         let mut user_active = user.into_active_model();
 

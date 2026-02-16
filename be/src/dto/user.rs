@@ -1,28 +1,30 @@
 use crate::entity::Gender;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use secrecy::SecretString;
 
 /// 用户创建请求
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CreateUserRequest {
     pub username: String,
-    pub password: String,
+    pub password: SecretString,
     pub age: Option<i32>,
     pub gender: Gender,
     pub email: Option<String>,
 }
 
 /// 用户更新请求
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct UpdateUserRequest {
     pub username: Option<String>,
-    pub password: Option<String>,
-    pub age: Option<Option<i32>>,
+    #[serde(default)]
+    pub password: Option<SecretString>,
+    pub age: Option<i32>,
     pub gender: Option<Gender>,
-    pub email: Option<Option<String>>,
+    pub email: Option<String>,
 }
 
 /// 用户响应（不含密码）
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct UserResponse {
     pub id: i32,
     pub username: String,
@@ -34,14 +36,14 @@ pub struct UserResponse {
 }
 
 /// 用户登录请求
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct LoginRequest {
     pub username: String,
-    pub password: String,
+    pub password: SecretString,
 }
 
 /// 用户列表响应
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct UserListResponse {
     pub users: Vec<UserResponse>,
     pub total: usize,

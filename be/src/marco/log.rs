@@ -10,14 +10,6 @@
 /// log_error!("数据库连接失败", error = %e);
 /// ```
 
-/// 简化通用日志宏（info 级别）
-#[macro_export]
-macro_rules! log {
-    ($($arg:tt)*) => {
-        tracing::info!($($arg)*)
-    };
-}
-
 /// 简化 info 日志宏
 #[macro_export]
 macro_rules! log_info {

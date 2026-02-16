@@ -1,5 +1,4 @@
 pub mod config;
-pub mod crypto;
 pub mod dao;
 pub mod dto;
 pub mod entity;

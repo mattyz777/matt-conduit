@@ -1,16 +1,15 @@
 use axum::{extract::{Path, State}, Json};
-use crate::dto::user_dto::{CreateUserRequest, LoginRequest, UpdateUserRequest, UserResponse};
-use crate::dto::common_dto::ApiResponse;
-use crate::entity::user_entity;
-use crate::service::user_service::UserService;
+use crate::dto::user::{CreateUserRequest, LoginRequest, UpdateUserRequest, UserResponse};
+use crate::dto::common::ApiResponse;
+use crate::entity::user;
+use crate::service::user::UserService;
 use crate::error::AppError;
 use crate::state::AppState;
-use crate::log;
 
 pub type ApiResult<T> = Result<Json<ApiResponse<T>>, AppError>;
 
 /// 将 entity Model 转换为 UserResponse
-fn to_response(user: &user_entity::Model) -> UserResponse {
+fn to_response(user: &user::Model) -> UserResponse {
     UserResponse {
         id: user.id,
         username: user.username.clone(),
@@ -27,7 +26,7 @@ pub async fn create_user(
     State(state): State<AppState>,
     Json(req): Json<CreateUserRequest>,
 ) -> ApiResult<UserResponse> {
-    log!("创建用户请求: username={}, age={:?}", req.username, req.age);
+    crate::log_info!("创建用户请求: username={}, age={:?}", req.username, req.age);
 
     let user = UserService::create(
         &state,
@@ -39,7 +38,7 @@ pub async fn create_user(
     )
     .await?;
 
-    log!("用户创建成功: id={}, username={}", user.id, user.username);
+    crate::log_info!("用户创建成功: id={}, username={}", user.id, user.username);
     Ok(Json(ApiResponse::ok(to_response(&user))))
 }
 
@@ -48,11 +47,11 @@ pub async fn get_user(
     State(state): State<AppState>,
     Path(id): Path<i32>,
 ) -> ApiResult<Option<UserResponse>> {
-    log!("查询用户请求: id={}", id);
+    crate::log_info!("查询用户请求: id={}", id);
 
     let user = UserService::find_by_id(&state, id).await?;
     let response = user.as_ref().map(|u| {
-        log!("用户查询成功: id={}, username={}", u.id, u.username);
+        crate::log_info!("用户查询成功: id={}, username={}", u.id, u.username);
         to_response(u)
     });
 
@@ -65,7 +64,7 @@ pub async fn update_user(
     Path(id): Path<i32>,
     Json(req): Json<UpdateUserRequest>,
 ) -> ApiResult<UserResponse> {
-    log!(
+    crate::log_info!(
         "更新用户请求: id={}, username={:?}, age={:?}, gender={:?}, email={:?}",
         id,
         req.username,
@@ -85,20 +84,20 @@ pub async fn update_user(
     )
     .await?;
 
-    log!("用户更新成功: id={}, username={}", user.id, user.username);
+    crate::log_info!("用户更新成功: id={}, username={}", user.id, user.username);
     Ok(Json(ApiResponse::ok(to_response(&user))))
 }
 
-/// 删除用户（软删除）
+/// 删除用户
 pub async fn delete_user(
     State(state): State<AppState>,
     Path(id): Path<i32>,
-) -> Result<Json<ApiResponse<()>>, AppError> {
-    log!("删除用户请求: id={}", id);
+) -> ApiResult<()> {
+    crate::log_info!("删除用户请求: id={}", id);
 
     UserService::delete(&state, id).await?;
 
-    log!("用户删除成功: id={}", id);
+    crate::log_info!("删除用户成功: id={}", id);
     Ok(Json(ApiResponse::<()>::ok_without_data("删除成功")))
 }
 
@@ -107,10 +106,10 @@ pub async fn login(
     State(state): State<AppState>,
     Json(req): Json<LoginRequest>,
 ) -> ApiResult<UserResponse> {
-    log!("用户登录请求: username={}", req.username);
+    crate::log_info!("用户登录请求: username={}", req.username);
 
     let user = UserService::verify_login(&state, &req.username, &req.password).await?;
 
-    log!("用户登录成功: id={}, username={}", user.id, user.username);
+    crate::log_info!("用户登录成功: id={}, username={}", user.id, user.username);
     Ok(Json(ApiResponse::ok(to_response(&user))))
 }

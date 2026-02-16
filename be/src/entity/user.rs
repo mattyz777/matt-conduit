@@ -1,8 +1,6 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-
-// 使用统一的敏感字段 Debug 实现
-use crate::impl_redacted_debug;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
 // #[sea_orm(rs_type = "i16", db_type = "TinyInteger")] // mysql/postgres
@@ -30,8 +28,22 @@ pub struct Model {
     pub is_deleted: bool,
 }
 
-// 编译时自动展开成代码
-impl_redacted_debug!(Model, password, [id, username, age, gender, email, created_at, updated_at, is_deleted]);
+// 自定义 Debug 实现，隐藏 password 字段；不用实现 #[derive(Debug)]
+impl fmt::Debug for Model {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Model")
+            .field("id", &self.id)
+            .field("username", &self.username)
+            .field("password", &"[REDACTED]")
+            .field("age", &self.age)
+            .field("gender", &self.gender)
+            .field("email", &self.email)
+            .field("created_at", &self.created_at)
+            .field("updated_at", &self.updated_at)
+            .field("is_deleted", &self.is_deleted)
+            .finish()
+    }
+}
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}

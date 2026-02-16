@@ -5,11 +5,13 @@ use axum::{
     response::Response,
 };
 use std::time::Instant;
-use tower_http::request_id::{PropagateRequestIdLayer, SetRequestIdLayer, MakeRequestUuid};
+use tower_http::{request_id::{PropagateRequestIdLayer, SetRequestIdLayer, MakeRequestUuid}, catch_panic::CatchPanicLayer};
 
 pub fn with_request_id(router: Router) -> Router {
     let request_id_header = http::header::HeaderName::from_static("x-request-id");
     router
+        // 生效顺序 4: 捕获 panic，返回 500 错误
+        .layer(CatchPanicLayer::new())
         // 生效顺序 3: 记录请求日志
         .layer(axum::middleware::from_fn(log_request))
         // 生效顺序 2: 传递 request_id 到下游服务

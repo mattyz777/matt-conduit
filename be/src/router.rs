@@ -2,7 +2,7 @@ use axum::Router;
 use axum::routing::{get, post, put, delete};
 use crate::state::AppState;
 use crate::observability::http::with_request_id;
-use crate::handler::user_handler;
+use crate::handler::user as user_handler;
 
 pub fn init_router(state: AppState) -> Router {
     let api_router = Router::new()

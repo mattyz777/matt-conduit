@@ -1,83 +1,76 @@
-//! 通用错误类型定义
+//! 通用应用错误
 //!
-//! 提供应用程序中通用的错误类型定义
+//! 统一错误类型，各层共享，通过 `#[from]` 自动转换，避免频繁手动转换
 
 use thiserror::Error;
 use axum::{response::{IntoResponse, Response}, http::StatusCode, Json};
-use crate::dto::common_dto::ApiResponse;
+use serde::Serialize;
 
-/// 通用应用错误
 #[derive(Error, Debug)]
 pub enum AppError {
-    #[error("Internal server error")]
-    InternalServer(String),
+    // 基础设施层（DAO）
+    #[error("database error: {0}")]
+    Database(#[from] sea_orm::DbErr),
 
-    #[error("Bad request: {0}")]
-    BadRequest(String),
+    #[error("redis error: {0}")]
+    Redis(String),
 
-    #[error("Unauthorized")]
+    // 业务层（Service）
+    #[error("user not found")]
+    UserNotFound,
+
+    #[error("username exists: {0}")]
+    UsernameExists(String),
+
+    #[error("invalid password")]
+    InvalidPassword,
+
+    // 认证/授权
+    #[error("unauthorized: {0}")]
     Unauthorized(String),
 
-    #[error("Resource not found: {0}")]
+    #[error("forbidden")]
+    Forbidden,
+
+    // 请求层（Handler）
+    #[error("bad request: {0}")]
+    BadRequest(String),
+
+    #[error("not found: {0}")]
     NotFound(String),
 
-    #[error("Resource already exists: {0}")]
-    AlreadyExists(String),
-
-    #[error("Conflict: {0}")]
+    #[error("conflict: {0}")]
     Conflict(String),
 }
 
-/// 错误码
-pub type ErrorCode = u16;
-
-impl AppError {
-    /// 获取错误码
-    pub fn code(&self) -> ErrorCode {
-        match self {
-            AppError::InternalServer(_) => 5000,
-            AppError::BadRequest(_) => 4000,
-            AppError::Unauthorized(_) => 4010,
-            AppError::NotFound(_) => 4040,
-            AppError::AlreadyExists(_) => 4090,
-            AppError::Conflict(_) => 4090,
-        }
-    }
-
-    /// 获取错误消息
-    pub fn message(&self) -> String {
-        match self {
-            AppError::InternalServer(msg) => msg.clone(),
-            AppError::BadRequest(msg) => msg.clone(),
-            AppError::Unauthorized(msg) => msg.clone(),
-            AppError::NotFound(msg) => msg.clone(),
-            AppError::AlreadyExists(msg) => msg.clone(),
-            AppError::Conflict(msg) => msg.clone(),
-        }
-    }
+/// 标准错误响应格式
+#[derive(Serialize)]
+struct ErrorResponse {
+    code: u16,
+    message: String,
+    data: serde_json::Value,
 }
 
-// 实现 From<sea_orm::DbErr> for AppError
-impl From<sea_orm::DbErr> for AppError {
-    fn from(err: sea_orm::DbErr) -> Self {
-        tracing::error!("Database error: {:?}", err);
-        AppError::InternalServer(err.to_string())
-    }
-}
-
-// 实现 IntoResponse for AppError
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let status = match &self {
-            AppError::InternalServer(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
-            AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
-            AppError::NotFound(_) => StatusCode::NOT_FOUND,
-            AppError::AlreadyExists(_) => StatusCode::CONFLICT,
-            AppError::Conflict(_) => StatusCode::CONFLICT,
+        let (status, code): (StatusCode, u16) = match &self {
+            // ========== 4xx 错误 ==========
+            AppError::BadRequest(_) => (StatusCode::BAD_REQUEST, 400),
+            AppError::Unauthorized(_) | AppError::InvalidPassword => (StatusCode::UNAUTHORIZED, 401),
+            AppError::Forbidden => (StatusCode::FORBIDDEN, 403),
+            AppError::NotFound(_) | AppError::UserNotFound => (StatusCode::NOT_FOUND, 404),
+            AppError::UsernameExists(_) | AppError::Conflict(_) => (StatusCode::CONFLICT, 409),
+
+            // ========== 5xx 错误 ==========
+            AppError::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, 500),
+            AppError::Redis(_) => (StatusCode::INTERNAL_SERVER_ERROR, 500),
         };
 
-        let body = ApiResponse::error(self.code(), &self.message());
+        let body = ErrorResponse {
+            code,
+            message: self.to_string(),
+            data: serde_json::Value::Null,
+        };
 
         (status, Json(body)).into_response()
     }

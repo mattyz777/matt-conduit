@@ -2,9 +2,9 @@ use bcrypt::{hash, verify, DEFAULT_COST};
 use anyhow::Result;
 
 pub fn hash_password(password: &str) -> Result<String> {
-    hash(password, DEFAULT_COST)
+    Ok(hash(password, DEFAULT_COST)?)
 }
 
 pub fn verify_password(password: &str, hash_str: &str) -> Result<bool> {
-    verify(password, hash_str)
+    Ok(verify(password, hash_str)?)
 }

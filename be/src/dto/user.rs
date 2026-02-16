@@ -23,7 +23,14 @@ pub struct UpdateUserRequest {
     pub email: Option<String>,
 }
 
-/// 用户响应（不含密码）
+/// 用户登录请求
+#[derive(Debug, Clone, Deserialize)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: SecretString,
+}
+
+/// 用户响应
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct UserResponse {
     pub id: i32,
@@ -33,13 +40,6 @@ pub struct UserResponse {
     pub email: Option<String>,
     pub created_at: String,
     pub updated_at: String,
-}
-
-/// 用户登录请求
-#[derive(Debug, Clone, Deserialize)]
-pub struct LoginRequest {
-    pub username: String,
-    pub password: SecretString,
 }
 
 /// 用户列表响应

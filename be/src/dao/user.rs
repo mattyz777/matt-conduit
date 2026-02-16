@@ -32,6 +32,46 @@ impl UserDao {
         Ok(user)
     }
 
+    /// 更新用户
+    pub async fn update(
+        state: &AppState,
+        user: user::Model,
+        username: Option<String>,
+        hashed_password: Option<String>,
+        age: Option<i32>,
+        gender: Option<Gender>,
+        email: Option<String>,
+    ) -> Result<user::Model, AppError> {
+        let mut user_active = user.into_active_model();
+
+        if let Some(new_username) = username {
+            user_active.username = Set(new_username);
+        }
+
+        if let Some(new_password) = hashed_password {
+            user_active.password = Set(new_password);
+        }
+
+        if let Some(new_age) = age {
+            user_active.age = Set(Some(new_age));
+        }
+
+        if let Some(new_gender) = gender {
+            user_active.gender = Set(new_gender);
+        }
+
+        if let Some(new_email) = email {
+            user_active.email = Set(Some(new_email));
+        }
+
+        user_active.updated_at = Set(chrono::Utc::now().naive_utc());
+
+        let updated_user = user_active.update(&state.db).await?;
+
+        Ok(updated_user)
+    }
+
+
     /// 根据 ID 查询用户
     pub async fn find_by_id(
         state: &AppState,
@@ -76,45 +116,6 @@ impl UserDao {
 
         let existing = query.one(&state.db).await?;
         Ok(existing.is_some())
-    }
-
-    /// 更新用户
-    pub async fn update(
-        state: &AppState,
-        user: user::Model,
-        username: Option<String>,
-        hashed_password: Option<String>,
-        age: Option<i32>,
-        gender: Option<Gender>,
-        email: Option<String>,
-    ) -> Result<user::Model, AppError> {
-        let mut user_active = user.into_active_model();
-
-        if let Some(new_username) = username {
-            user_active.username = Set(new_username);
-        }
-
-        if let Some(new_password) = hashed_password {
-            user_active.password = Set(new_password);
-        }
-
-        if let Some(new_age) = age {
-            user_active.age = Set(Some(new_age));
-        }
-
-        if let Some(new_gender) = gender {
-            user_active.gender = Set(new_gender);
-        }
-
-        if let Some(new_email) = email {
-            user_active.email = Set(Some(new_email));
-        }
-
-        user_active.updated_at = Set(chrono::Utc::now().naive_utc());
-
-        let updated_user = user_active.update(&state.db).await?;
-
-        Ok(updated_user)
     }
 
     /// 软删除用户（设置 is_deleted = true）
